@@ -37,7 +37,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>ie.rolfe.crate.iotexample.PingCrate</mainClass>
+                            <mainClass>ie.rolfe.crate.iotexample.QueryCrate</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
@@ -47,7 +47,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.3.0</version>
                 <configuration>
-                    <mainClass>ie.rolfe.crate.iotexample.PingCrate</mainClass>
+                    <mainClass>ie.rolfe.crate.iotexample.QueryCrate</mainClass>
                 </configuration>
             </plugin>
         </plugins>
