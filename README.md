@@ -20,12 +20,12 @@ The single application class is [`QueryCrate`](src/main/java/ie/rolfe/crate/iote
    SELECT min(data['temperature']) min_t, max(data['temperature']) max_t
    FROM demo.climate_data
    WHERE distance(geo_location, ?::geo_point) < 1
-     AND "timestamp" = ?
+     AND measurement_time = ?
    ```
 
    **REGION** — three-table join: finds the latest temperature readings for every sensor location inside a named German region, converting Kelvin to Celsius.
    ```sql
-   SELECT d."timestamp" as time,
+   SELECT d.measurement_time as time,
           latitude(d.geo_location) as latitude,
           longitude(d.geo_location) as longitude,
           data['temperature'] - 273.15 as temperature,
@@ -34,7 +34,7 @@ The single application class is [`QueryCrate`](src/main/java/ie/rolfe/crate/iote
    WHERE WITHIN(d.geo_location, r.geo_coords)
      AND gp.geo_location = d.geo_location
      AND r.region_name = ?
-     AND d."timestamp" = (SELECT max(d2."timestamp") FROM demo.climate_data d2)
+     AND d.measurement_time = (SELECT max(d2.measurement_time) FROM demo.climate_data d2)
    ```
 
    **FTS** — full-text search: searches the `economics` column of `demo.german_regions` using CrateDB's `MATCH` predicate and returns the top 3 results by relevance score.
@@ -54,7 +54,7 @@ The single application class is [`QueryCrate`](src/main/java/ie/rolfe/crate/iote
 - Maven 3.9+
 - Network access to your CrateDB cluster on port 5432
 - The following tables populated in a `demo` schema:
-  - `climate_data` — with `geo_location` (`geo_point`), `"timestamp"` (`timestamp with time zone`), and `data` (`object` with a `temperature` field)
+  - `climate_data` — with `geo_location` (`geo_point`), `measurement_time` (`timestamp`), and `data` (`object` with a `temperature` field)
   - `german_regions` — with `region_name`, `geo_coords` (polygon), and `economics` (full-text indexed)
   - `geo_points` — with `geo_location` and `nearest_town`
 
@@ -126,7 +126,7 @@ FTS: count=30 avg=5.1ms p50=4ms p99=15ms p99.9=15ms max=18ms
 
 - **`distance(geo_location, ?::geo_point) < 1`** — CrateDB stores `geo_point` values in a Lucene-encoded form that quantises the underlying doubles, so an exact `=` comparison against a value you read back will not always match. Filtering with a 1-metre tolerance reliably identifies the same grid square at climate-data resolution.
 - **`?::geo_point`** — the `?` is a JDBC parameter placeholder; `::geo_point` is PostgreSQL/CrateDB cast syntax. The parameter is bound as a WKT string (`POINT(lon lat)`) and the server parses it.
-- **`"timestamp"`** — `timestamp` is a reserved word, so the column name must be quoted. Quoting also makes the identifier case-sensitive.
+- **`measurement_time`** — the timestamp column in `demo.climate_data`.
 - **`WITHIN(d.geo_location, r.geo_coords)`** — CrateDB geo function that tests whether a point falls inside a polygon. Used in the REGION query to find all sensors within a named German state.
 - **`MATCH(economics, ?)`** — CrateDB's full-text search predicate. The `economics` column has a full-text index, and `MATCH` scores each row by relevance. `_score` is a built-in CrateDB relevance column.
 

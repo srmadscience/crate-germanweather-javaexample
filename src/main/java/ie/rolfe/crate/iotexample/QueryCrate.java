@@ -76,17 +76,17 @@ public class QueryCrate {
             "SELECT min(data['temperature']) min_t, max(data['temperature']) max_t\n" +
             "FROM demo.climate_data\n" +
             "WHERE distance(geo_location, ?::geo_point) < 1\n" +
-            "AND \"timestamp\" = ?";
+            "AND measurement_time = ?";
 
     // Three-table join: climate readings × regions × named points. Finds the latest temperature
     // readings for every sensor location inside a named German region.
     // WITHIN() is a CrateDB geo function that tests whether a point falls inside a polygon.
-    // The correlated subquery "SELECT max(d2.timestamp)" restricts results to the most recent
+    // The correlated subquery "SELECT max(d2.measurement_time)" restricts results to the most recent
     // measurement epoch — a common pattern when you want "latest data" without a separate index.
     // Subtracting 273.15 converts Kelvin (the stored unit) to Celsius.
     private static final String REGION_SQL =
             "SELECT\n" +
-            "  d.\"timestamp\" as time,\n" +
+            "  d.measurement_time as time,\n" +
             "  latitude(d.geo_location) as latitude,\n" +
             "  longitude(d.geo_location) as longitude,\n" +
             "  data['temperature'] - 273.15 as temperature,\n" +
@@ -98,7 +98,7 @@ public class QueryCrate {
             "WHERE WITHIN(d.geo_location, r.geo_coords)\n" +
             "AND gp.geo_location = d.geo_location\n" +
             "AND r.region_name = ?\n" +
-            "AND d.\"timestamp\" = (SELECT max(d2.\"timestamp\") FROM demo.climate_data d2)";
+            "AND d.measurement_time = (SELECT max(d2.measurement_time) FROM demo.climate_data d2)";
 
     // Full-text search query using CrateDB's MATCH predicate. Works like a search engine —
     // the "economics" column has a full-text index, and MATCH scores each row by how well
@@ -501,12 +501,12 @@ public class QueryCrate {
     // Loads every distinct timestamp. The ORDER BY isn't strictly necessary for random sampling,
     // but it makes the loaded data deterministic and easier to debug.
     private static void loadTimestamps(Connection conn) throws SQLException {
-        String sql = "SELECT \"timestamp\" FROM demo.climate_data "
-                + "GROUP BY \"timestamp\" ORDER BY \"timestamp\"";
+        String sql = "SELECT measurement_time FROM demo.climate_data "
+                + "GROUP BY measurement_time ORDER BY measurement_time";
         try (Statement statement = conn.createStatement();
              ResultSet rs = statement.executeQuery(sql)) {
             while (rs.next()) {
-                Timestamp ts = rs.getTimestamp("timestamp");
+                Timestamp ts = rs.getTimestamp("measurement_time");
                 if (ts != null) {
                     timestamps.add(ts);
                 }
