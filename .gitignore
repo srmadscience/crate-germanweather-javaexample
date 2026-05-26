@@ -28,3 +28,10 @@ replay_pid*
 
 # Maven build output
 target/
+
+# Python
+.venv/
+
+# .NET
+bin/
+obj/
