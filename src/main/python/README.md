@@ -9,6 +9,7 @@ Python port of the CrateDB climate data load-generator. Connects to a [CrateDB](
 3. Pre-loads reference data from the database (only for query types that will be run):
    - **WKT** queries: loads every distinct `geo_location` and `measurement_time` from `demo.climate_data`.
    - **REGION** queries: loads every `region_name` from `demo.german_regions`.
+   - **FTS** queries: uses canned search terms (`cars`, `trains`, `factories`, `energy`) rotated randomly — no database pre-load needed.
 4. Runs a workload of queries at a configurable rate, choosing from three query types:
 
    **WKT** — geo-proximity query: finds min/max temperature within 1 metre of a random point at a random timestamp.
